@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>이슬 누나 관리 표</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Malgun Gothic', Arial, sans-serif;
+            background: #f6f7fb;
+            margin: 0;
+            padding: 0;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 32px;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+        }
+        .container {
+            margin: 0 auto 40px auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+            padding: 32px 24px 24px 24px;
+        }
+        .import-export-form,
+        .add-column-form,
+        .add-form {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .add-form {
+            flex-wrap: wrap;
+            gap: 16px 24px;
+        }
+        .add-form input,
+        .add-column-form input,
+        .col-input,
+        .row-add-input {
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 1em;
+            background: #fafbfc;
+            transition: border 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+        .add-form input:focus,
+        .add-column-form input:focus {
+            border-color: #5b8def;
+            box-shadow: 0 0 0 2px #e1ecfa;
+        }
+        .row-add-input {
+            margin-right: 0;
+            margin-bottom: 4px;
+        }
+        button,
+        .export-btn,
+        .import-btn,
+        .col-add-btn,
+        .row-delete-btn,
+        .col-delete-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 1em;
+            background: #5b8def;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(91,141,239,0.05);
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .export-btn, .import-btn, .col-add-btn {
+            background: #3bb77e;
+        }
+        .export-btn:hover, .import-btn:hover, .col-add-btn:hover {
+            background: #2e9463;
+        }
+        .row-delete-btn, .col-delete-btn {
+            background: #ef5350;
+            padding: 6px 12px;
+            font-size: 0.95em;
+            margin-left: 8px;
+        }
+        .row-delete-btn:hover, .col-delete-btn:hover {
+            background: #c62828;
+        }
+        .add-form button {
+            background: #5b8def;
+            margin-left: 12px;
+        }
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1.5px solid #e3e6ef;
+            font-size: 1em;
+        }
+        th {
+            background: #f2f6fa;
+            color: #3b4252;
+            font-weight: 600;
+            position: relative;
+        }
+        th:last-child, td:last-child {
+            text-align: center;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        .no-result {
+            text-align: center;
+            color: #b0b5be;
+            font-size: 1.05em;
+            background: #f9fafb;
+        }
+        label {
+            font-size: 1em;
+            color: #444;
+            margin-right: 8px;
+            font-weight: 500;
+        }
+        #columnSelect, #searchInput {
+            margin-right: 16px;
+            border-radius: 8px;
+            border: 1.5px solid #d1d5db;
+            padding: 8px 12px;
+            font-size: 1em;
+            background: #fafbfc;
+            transition: border 0.2s;
+        }
+        #columnSelect:focus, #searchInput:focus {
+            border-color: #5b8def;
+        }
+        @media (max-width: 900px) {
+            .container { padding: 18px 5px 18px 5px; }
+            table { font-size: 0.98em; }
+            .add-form, .add-column-form, .import-export-form { gap: 8px; }
+            .add-form input, .add-column-form input, .col-input, .row-add-input { width: 85px; }
+            th, td { padding: 8px 5px; }
+        }
+        @media (max-width: 600px) {
+            h2 { font-size: 1.2em; }
+            .container { padding: 8px 2px; }
+            .add-form, .add-column-form, .import-export-form { flex-direction: column; gap: 6px; }
+            table { font-size: 0.93em; }
+            th, td { padding: 6px 2px; }
+        }
+    </style>
+</head>
+<body>
+<h2>이슬 누나 관리 표</h2>
+<div class="container">
+    <div class="import-export-form">
+        <button type="button" class="export-btn" id="exportBtn">내보내기</button>
+        <input type="file" id="importFile" accept=".json" style="display:none;">
+        <button type="button" class="import-btn" id="importBtn">가져오기</button>
+    </div>
+    <div class="add-column-form">
+        <input type="text" id="addColumnName" class="col-input" placeholder="새 컬럼명 입력">
+        <button type="button" class="col-add-btn" id="addColumnBtn">컬럼 추가</button>
+    </div>
+    <div class="add-form" id="rowAddForm">
+        <!-- 행 추가 입력란이 동적으로 생성됨 -->
+    </div>
+    <div style="margin-bottom:18px;">
+        <label for="columnSelect">컬럼 선택:</label>
+        <select id="columnSelect"></select>
+        <input type="text" id="searchInput" placeholder="검색어를 입력하세요">
+    </div>
+    <table id="dataTable">
+        <thead>
+        <tr id="headerRow">
+            <!-- 헤더 동적 생성 -->
+        </tr>
+        </thead>
+        <tbody>
+        <!-- 행 동적 생성 -->
+        </tbody>
+    </table>
+</div>
+<script>
+    // localStorage key
+    const LS_KEY = 'dynamicTableData';
+
+    // 초기 컬럼명
+    let columns = [
+        "사망 후유", "중대질환 (암, 뇌, 심장)", "진단비", "입원일당", "간병비", "수술비", "골절화상",
+        "운전/비용", "재물/배상", "기타", "갱신형", "비갱신형"
+    ];
+    let dataRows = [
+        ["O", "X", "100만원", "5만원", "없음", "200만원", "없음", "있음", "없음", "특이사항 없음", "Y", "N"],
+        ["X", "O", "200만원", "없음", "10만원", "없음", "100만원", "없음", "있음", "없음", "N", "Y"]
+    ];
+
+    // localStorage에서 데이터 불러오기
+    function loadFromLocalStorage() {
+        const data = localStorage.getItem(LS_KEY);
+        if (data) {
+            try {
+                const obj = JSON.parse(data);
+                if (Array.isArray(obj.columns) && Array.isArray(obj.dataRows)) {
+                    columns = obj.columns;
+                    dataRows = obj.dataRows;
+                }
+            } catch (e) {}
+        }
+    }
+
+    // localStorage에 데이터 저장
+    function saveToLocalStorage() {
+        const obj = {
+            columns: columns,
+            dataRows: dataRows
+        };
+        localStorage.setItem(LS_KEY, JSON.stringify(obj));
+    }
+
+    // DOM 요소
+    const dataTable = document.getElementById('dataTable');
+    const headerRow = document.getElementById('headerRow');
+    const tbody = dataTable.querySelector('tbody');
+    const addColumnName = document.getElementById('addColumnName');
+    const addColumnBtn = document.getElementById('addColumnBtn');
+    const columnSelect = document.getElementById('columnSelect');
+    const searchInput = document.getElementById('searchInput');
+    const rowAddForm = document.getElementById('rowAddForm');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importFile = document.getElementById('importFile');
+
+    function renderHeader() {
+        headerRow.innerHTML = '';
+        columns.forEach((col, idx) => {
+            const th = document.createElement('th');
+            th.textContent = col;
+            // 컬럼 삭제 버튼
+            const btn = document.createElement('button');
+            btn.textContent = '삭제';
+            btn.className = 'col-delete-btn';
+            btn.title = `'${col}' 컬럼 삭제`;
+            btn.onclick = function() {
+                if (confirm(`'${col}' 컬럼을 삭제하시겠습니까?`)) {
+                    deleteColumn(idx);
+                }
+            };
+            th.appendChild(btn);
+            headerRow.appendChild(th);
+        });
+        // 행 삭제용 th
+        const thDel = document.createElement('th');
+        thDel.textContent = '삭제';
+        headerRow.appendChild(thDel);
+    }
+
+    function renderColumnSelect() {
+        columnSelect.innerHTML = '';
+        columns.forEach((col, idx) => {
+            const option = document.createElement('option');
+            option.value = idx;
+            option.textContent = col;
+            columnSelect.appendChild(option);
+        });
+    }
+
+    function renderRowAddForm() {
+        rowAddForm.innerHTML = '';
+        columns.forEach((col, idx) => {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = col;
+            input.id = 'addCol' + idx;
+            input.className = 'col-input row-add-input';
+            input.title = col;
+            rowAddForm.appendChild(input);
+        });
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = '행 추가';
+        btn.onclick = addRow;
+        rowAddForm.appendChild(btn);
+    }
+
+    function renderTable() {
+        tbody.innerHTML = '';
+        const keyword = searchInput.value.trim().toLowerCase();
+        const columnIdx = parseInt(columnSelect.value, 10);
+
+        // 필터링
+        const filteredRows = dataRows
+            .map((row, idx) => ({row, idx}))
+            .filter(({row}) => {
+                const cellText = row[columnIdx] ? row[columnIdx].trim().toLowerCase() : '';
+                return keyword === '' || cellText.includes(keyword);
+            });
+
+        if (filteredRows.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = columns.length + 1;
+            td.className = 'no-result';
+            td.textContent = '검색 결과 없음';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+        } else {
+            filteredRows.forEach(({row, idx}) => {
+                const tr = document.createElement('tr');
+                row.forEach(cell => {
+                    const td = document.createElement('td');
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+                // 행 삭제 버튼
+                const tdDel = document.createElement('td');
+                const btn = document.createElement('button');
+                btn.textContent = '삭제';
+                btn.className = 'row-delete-btn';
+                btn.title = '이 행 삭제';
+                btn.onclick = function() {
+                    deleteRowByIndex(idx);
+                };
+                tdDel.appendChild(btn);
+                tr.appendChild(tdDel);
+                tbody.appendChild(tr);
+            });
+        }
+    }
+
+    // 컬럼 추가
+    function addColumn() {
+        const newCol = addColumnName.value.trim();
+        if (!newCol) {
+            alert('컬럼명을 입력하세요.');
+            return;
+        }
+        columns.push(newCol);
+        dataRows.forEach(row => row.push(''));
+        addColumnName.value = '';
+        rerenderAll();
+        saveToLocalStorage();
+    }
+
+    // 컬럼 삭제
+    function deleteColumn(colIdx) {
+        columns.splice(colIdx, 1);
+        dataRows.forEach(row => row.splice(colIdx, 1));
+        rerenderAll();
+        saveToLocalStorage();
+    }
+
+    // 행 추가
+    function addRow() {
+        const values = [];
+        for (let i = 0; i < columns.length; i++) {
+            const val = document.getElementById('addCol' + i).value.trim();
+            values.push(val);
+        }
+        if (values.some(v => !v)) {
+            alert('모든 값을 입력하세요.');
+            return;
+        }
+        dataRows.push(values);
+        rerenderAll();
+        saveToLocalStorage();
+    }
+
+    // 행 삭제
+    function deleteRowByIndex(filteredIdx) {
+        const keyword = searchInput.value.trim().toLowerCase();
+        const columnIdx = parseInt(columnSelect.value, 10);
+        let filteredIndices = [];
+        dataRows.forEach((row, idx) => {
+            const cellText = row[columnIdx] ? row[columnIdx].trim().toLowerCase() : '';
+            if (keyword === '' || cellText.includes(keyword)) {
+                filteredIndices.push(idx);
+            }
+        });
+        const realIdx = filteredIndices[filteredIdx];
+        if (realIdx !== undefined) {
+            dataRows.splice(realIdx, 1);
+            renderTable();
+            saveToLocalStorage();
+        }
+    }
+
+    function rerenderAll() {
+        renderHeader();
+        renderColumnSelect();
+        renderRowAddForm();
+        renderTable();
+    }
+
+    // 내보내기(다운로드)
+    function exportTable() {
+        const exportObj = {
+            columns: columns,
+            dataRows: dataRows
+        };
+        const json = JSON.stringify(exportObj, null, 2);
+        const blob = new Blob([json], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'table-data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // 가져오기(업로드)
+    function importTable(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const obj = JSON.parse(e.target.result);
+                if (!Array.isArray(obj.columns) || !Array.isArray(obj.dataRows)) {
+                    alert('올바른 파일이 아닙니다.');
+                    return;
+                }
+                columns = obj.columns;
+                dataRows = obj.dataRows;
+                rerenderAll();
+                saveToLocalStorage();
+            } catch (err) {
+                alert('파일을 읽을 수 없습니다.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    addColumnBtn.addEventListener('click', addColumn);
+    searchInput.addEventListener('input', renderTable);
+    columnSelect.addEventListener('change', renderTable);
+
+    exportBtn.addEventListener('click', exportTable);
+
+    importBtn.addEventListener('click', function() {
+        importFile.value = '';
+        importFile.click();
+    });
+    importFile.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            importTable(e.target.files[0]);
+        }
+    });
+
+    // 데이터 변경 시 localStorage에 저장
+    // (컬럼/행 추가/삭제 함수에서 saveToLocalStorage 호출)
+
+    // 최초 진입 시 localStorage에서 데이터 불러오기
+    loadFromLocalStorage();
+    rerenderAll();
+</script>
+</body>
+</html>
